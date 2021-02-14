@@ -1,0 +1,10 @@
+## Formats the all Go files to the desired format.
+.PHONY: format
+format: deps tools
+	@ echo "-> Formatting Go files..."
+	@ $(GOBIN)/golangci-lint run --fix
+	@ $(GOBIN)/tfproviderlint -fix ./...
+	@ echo "-> Formatting Terraform documentation blocks..."
+	@ find ./docs -type f -name "*.md" -exec $(GOBIN)/terrafmt fmt -f {} \;
+	@ terraform fmt -write=true -recursive
+	@ echo "-> Done."

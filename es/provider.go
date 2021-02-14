@@ -68,7 +68,8 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"elasticsearch_index_template": resourceElasticsearchIndexTemplate(),
+			"elasticsearch_index_template": resourceElasticsearchDataStreamTemplate(),
+			"elasticsearch_data_stream_template": resourceElasticsearchDataStreamTemplate(),
 		},
 
 		ConfigureFunc: providerConfigure,

@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func TestAccElasticsearchIndex(t *testing.T) {
+func TestAccElasticsearchDataStream(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
