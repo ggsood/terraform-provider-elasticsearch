@@ -1,3 +1,9 @@
+// Manage index template in Elasticsearch
+// API documentation: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-templates.html
+// Supported version:
+//  - v6
+//  - v7
+
 package es
 
 import (

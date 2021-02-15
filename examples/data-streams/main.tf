@@ -9,18 +9,14 @@ terraform {
   }
 }
 
-provider "elasticsearch" {
-  hosts = "https://38b970e313304d3bb3bf3da116aa053b.eu-west-2.aws.cloud.es.io:9243"
-  username = "elastic"
-  password = "P4N4kuipuqdpN2WMXx6GBvGc"
-}
+provider "elasticsearch" {}
 
-resource elasticsearch_data_stream_template "test" {
+resource "elasticsearch_xpack_data_stream_template" "abc" {
   name         = "terraform-data-stream-test"
   template     = <<EOF
 {
   "index_patterns": [
-    "test"
+    "gaurav"
   ],
   "data_stream": {},
   "template": {
@@ -29,6 +25,23 @@ resource elasticsearch_data_stream_template "test" {
     }
   },
   "priority": 20
+}
+EOF
+}
+
+resource "elasticsearch_index_template" "test" {
+  name 		= "terraform-test"
+  template 	= <<EOF
+{
+  "index_patterns": [
+    "test"
+  ],
+  "settings": {
+    "index.refresh_interval": "5s",
+    "index.lifecycle.name": "policy-logstash-backup",
+    "index.lifecycle.rollover_alias": "logstash-backup-alias"
+  },
+  "order": 2
 }
 EOF
 }

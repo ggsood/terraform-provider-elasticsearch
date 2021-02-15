@@ -6,10 +6,38 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	log "github.com/sirupsen/logrus"
 )
 
 // diffSuppressIndexTemplate permit to compare template in current state vs from API
 func diffSuppressIndexTemplate(k, old, new string, d *schema.ResourceData) bool {
+	var oo, no map[string]interface{}
+	if err := json.Unmarshal([]byte(old), &oo); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(new), &no); err != nil {
+		return false
+	}
+
+	// Add default parameters on new index template if needed
+	if _, ok := no["order"]; !ok {
+		no["order"] = 0
+	}
+	if _, ok := no["settings"]; !ok {
+		no["settings"] = make(map[string]interface{})
+	}
+	if _, ok := no["mappings"]; !ok {
+		no["mappings"] = make(map[string]interface{})
+	}
+	if _, ok := no["aliases"]; !ok {
+		no["aliases"] = make(map[string]interface{})
+	}
+
+	return reflect.DeepEqual(oo[d.Id()], parseAllDotProperties(no))
+}
+
+// diffSuppressDataStreamTemplate permit to compare template in current state vs from API
+func diffSuppressDataStreamTemplate(k, old, new string, d *schema.ResourceData) bool {
 	var oo, no map[string]interface{}
 	if err := json.Unmarshal([]byte(old), &oo); err != nil {
 		return false
@@ -44,6 +72,27 @@ func suppressEquivalentJSON(k, old, new string, d *schema.ResourceData) bool {
 	if err := json.Unmarshal([]byte(new), &newObj); err != nil {
 		return false
 	}
+	return reflect.DeepEqual(oldObj, newObj)
+}
+
+// suppressLicense permit to compare license in current state VS API
+func suppressLicense(k, old, new string, d *schema.ResourceData) bool {
+
+	oldObj := &LicenseSpec{}
+	newObjTemp := make(License)
+	if err := json.Unmarshal([]byte(old), oldObj); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(new), &newObjTemp); err != nil {
+		return false
+	}
+	newObj := newObjTemp["license"]
+
+	newObj.Signature = ""
+	oldObj.Signature = ""
+
+	log.Debugf("Old: %s\nNew: %s", oldObj, newObj)
+
 	return reflect.DeepEqual(oldObj, newObj)
 }
 

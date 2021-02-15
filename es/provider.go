@@ -19,15 +19,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Provider variables required for calling Elasticsearch APIs
+// Provider permiit to init the terraform provider
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"hosts": {
+			"urls": {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("ELASTICSEARCH_HOSTS", nil),
-				Description: "Elasticsearch Hosts",
+				DefaultFunc: schema.EnvDefaultFunc("ELASTICSEARCH_URLS", nil),
+				Description: "Elasticsearch URLs",
 			},
 			"username": {
 				Type:        schema.TypeString,
@@ -41,11 +41,11 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("ELASTICSEARCH_PASSWORD", nil),
 				Description: "Password to use to connect to elasticsearch using basic auth",
 			},
-			"ca_cert_file": {
+			"cacert_file": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "",
-				Description: "Custom CA certificate",
+				Description: "A Custom CA certificate",
 			},
 			"insecure": {
 				Type:        schema.TypeBool,
@@ -57,35 +57,43 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     6,
-				Description: "Number of times to retry connection before failing",
+				Description: "Nummber time it retry connexion before failed",
 			},
 			"wait_before_retry": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     10,
-				Description: "Wait time in second before retry connection",
+				Description: "Wait time in second before retry connexion",
 			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"elasticsearch_index_template": resourceElasticsearchDataStreamTemplate(),
-			"elasticsearch_data_stream_template": resourceElasticsearchDataStreamTemplate(),
+			"elasticsearch_index_lifecycle_policy":    resourceElasticsearchIndexLifecyclePolicy(),
+			"elasticsearch_index_template":            resourceElasticsearchIndexTemplate(),
+			"elasticsearch_role":                      resourceElasticsearchSecurityRole(),
+			"elasticsearch_role_mapping":              resourceElasticsearchSecurityRoleMapping(),
+			"elasticsearch_user":                      resourceElasticsearchSecurityUser(),
+			"elasticsearch_license":                   resourceElasticsearchLicense(),
+			"elasticsearch_snapshot_repository":       resourceElasticsearchSnapshotRepository(),
+			"elasticsearch_snapshot_lifecycle_policy": resourceElasticsearchSnapshotLifecyclePolicy(),
+			"elasticsearch_watcher":                   resourceElasticsearchWatcher(),
+			"elasticsearch_xpack_data_stream_template": resourceElasticsearchDataStreamTemplate(),
 		},
 
 		ConfigureFunc: providerConfigure,
 	}
 }
 
-// providerConfigure to initialize the rest client to access on Elasticsearch API
+// providerConfigure permit to initialize the rest client to access on Elasticsearch API
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 
 	var (
 		data map[string]interface{}
 	)
 
-	hosts := strings.Split(d.Get("hosts").(string), ",")
+	URLs := strings.Split(d.Get("urls").(string), ",")
 	insecure := d.Get("insecure").(bool)
-	caCertFile := d.Get("ca_cert_file").(string)
+	cacertFile := d.Get("cacert_file").(string)
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
 	retry := d.Get("retry").(int)
@@ -94,16 +102,16 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		TLSClientConfig: &tls.Config{},
 	}
 	// Checks is valid URLs
-	for _, rawURL := range hosts {
+	for _, rawURL := range URLs {
 		_, err := url.Parse(rawURL)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	// Initialize connection
+	// Intialise connexion
 	cfg := elastic.Config{
-		Addresses: hosts,
+		Addresses: URLs,
 	}
 	if username != "" && password != "" {
 		cfg.Username = username
@@ -112,9 +120,9 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	if insecure == true {
 		transport.TLSClientConfig.InsecureSkipVerify = true
 	}
-	// If a caCertFile has been specified, use that for cert validation
-	if caCertFile != "" {
-		caCert, _, _ := pathorcontents.Read(caCertFile)
+	// If a cacertFile has been specified, use that for cert validation
+	if cacertFile != "" {
+		caCert, _, _ := pathorcontents.Read(cacertFile)
 
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM([]byte(caCert))
@@ -126,8 +134,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		return nil, err
 	}
 
-	// Test connection and check elastic version to use the right Version
-	numFailed := 0
+	// Test connexion and check elastic version to use the right Version
+	nbFailed := 0
 	isOnline := false
 	var res *esapi.Response
 	for isOnline == false {
@@ -137,20 +145,18 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		if err == nil && res.IsError() == false {
 			isOnline = true
 		} else {
-			if numFailed == retry {
+			if nbFailed == retry {
 				return nil, err
 			}
-			numFailed++
+			nbFailed++
 			time.Sleep(time.Duration(waitBeforeRetry) * time.Second)
 		}
 	}
 
 	defer res.Body.Close()
-
 	if res.IsError() {
-		return nil, errors.Errorf("Error when getting info about Elasticsearch client: %s", res.String())
+		return nil, errors.Errorf("Error when get info about Elasticsearch client: %s", res.String())
 	}
-
 	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
 		return nil, err
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func TestAccElasticsearchDataStream(t *testing.T) {
+func TestAccElasticsearchIndex(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -49,7 +49,7 @@ func testCheckElasticsearchIndexTemplateExists(name string) resource.TestCheckFu
 			return fmt.Errorf("Not found: %s", name)
 		}
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No inde ID is set")
+			return fmt.Errorf("No index template ID is set")
 		}
 
 		meta := testAccProvider.Meta()

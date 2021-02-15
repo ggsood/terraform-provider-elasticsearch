@@ -42,8 +42,8 @@ func TestProvider_impl(t *testing.T) {
 }
 
 func testAccPreCheck(t *testing.T) {
-	if v := os.Getenv("ELASTICSEARCH_HOSTS"); v == "" {
-		t.Fatal("ELASTICSEARCH_HOSTS must be set for acceptance tests")
+	if v := os.Getenv("ELASTICSEARCH_URLS"); v == "" {
+		t.Fatal("ELASTICSEARCH_URLS must be set for acceptance tests")
 	}
 
 }

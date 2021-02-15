@@ -33,7 +33,6 @@ func resourceElasticsearchDataStreamTemplate() *schema.Resource {
 			"template": {
 				Type:             schema.TypeString,
 				Required:         true,
-				DiffSuppressFunc: diffSuppressIndexTemplate,
 			},
 		},
 	}
@@ -42,7 +41,7 @@ func resourceElasticsearchDataStreamTemplate() *schema.Resource {
 // resourceElasticsearchDataStreamTemplateCreate create index template
 func resourceElasticsearchDataStreamTemplateCreate(d *schema.ResourceData, meta interface{}) error {
 
-	err := createIndexTemplate(d, meta)
+	err := createDataStreamTemplate(d, meta)
 	if err != nil {
 		return err
 	}
@@ -52,7 +51,7 @@ func resourceElasticsearchDataStreamTemplateCreate(d *schema.ResourceData, meta 
 
 // resourceElasticsearchDataStreamTemplateUpdate update index template
 func resourceElasticsearchDataStreamTemplateUpdate(d *schema.ResourceData, meta interface{}) error {
-	err := createIndexTemplate(d, meta)
+	err := createDataStreamTemplate(d, meta)
 	if err != nil {
 		return err
 	}
@@ -89,7 +88,7 @@ func resourceElasticsearchDataStreamTemplateRead(d *schema.ResourceData, meta in
 	}
 	body := string(b)
 
-	log.Debugf("Get index template %s successfully:\n%s", id, body)
+	log.Debugf("Get data stream template %s successfully:\n%s", id, body)
 	d.Set("name", d.Id())
 	d.Set("template", body)
 	return nil
@@ -115,8 +114,8 @@ func resourceElasticsearchDataStreamTemplateDelete(d *schema.ResourceData, meta 
 
 	if res.IsError() {
 		if res.StatusCode == 404 {
-			fmt.Printf("[WARN] Index template %s not found - removing from state", id)
-			log.Warnf("Index template %s not found - removing from state", id)
+			fmt.Printf("[WARN] Data Stream template %s not found - removing from state", id)
+			log.Warnf("Data Stream template template %s not found - removing from state", id)
 			d.SetId("")
 			return nil
 		}
