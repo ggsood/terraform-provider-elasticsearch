@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 export GO111MODULE ?= on
-export VERSION := 0.1.0-beta-dev
+export VERSION := 0.0.1
 export BINARY := terraform-provider-elasticsearch
 export GOBIN = $(shell pwd)/bin
 

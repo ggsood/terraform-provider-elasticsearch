@@ -22,6 +22,23 @@ resource "elasticsearch_xpack_data_stream_template" "abc" {
   "template": {
     "settings": {
       "index.lifecycle.name": "my-data-stream-policy"
+    },
+    "mappings": {
+        "dynamic_templates": [
+            {
+              "integers": {
+                "match_mapping_type": "long",
+                "mapping": {
+                  "type": "integer"
+                }
+              }
+            }
+        ],
+        "properties": {
+          "name" : {
+            "type": "keyword"
+          }
+        }
     }
   },
   "priority": 20
@@ -42,6 +59,30 @@ resource "elasticsearch_index_template" "test" {
     "index.lifecycle.rollover_alias": "logstash-backup-alias"
   },
   "order": 2
+}
+EOF
+}
+
+resource "elasticsearch_ingest_pipeline" "test" {
+  name = "terraform-test"
+  body = <<EOF
+{
+  "description" : "describe pipeline",
+  "version": 123,
+  "processors" : [
+    {
+      "set" : {
+        "field": "foo",
+        "value": "bar"
+      }
+    },
+    {
+      "set" : {
+        "field": "abc",
+        "value": "xyz"
+      }
+    }
+  ]
 }
 EOF
 }
