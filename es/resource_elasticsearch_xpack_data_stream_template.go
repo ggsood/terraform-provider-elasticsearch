@@ -115,7 +115,7 @@ func resourceElasticsearchDataStreamTemplateDelete(d *schema.ResourceData, meta 
 	if res.IsError() {
 		if res.StatusCode == 404 {
 			fmt.Printf("[WARN] Data Stream template %s not found - removing from state", id)
-			log.Warnf("Data Stream template template %s not found - removing from state", id)
+			log.Warnf("Data Stream template %s not found - removing from state", id)
 			d.SetId("")
 			return nil
 		}

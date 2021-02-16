@@ -124,3 +124,15 @@ func parseDotPropertie(key string, value interface{}, result map[string]interfac
 		result[key] = value
 	}
 }
+
+func diffSuppressIngestPipeline(k, old, new string, d *schema.ResourceData) bool {
+	var oo, no interface{}
+	if err := json.Unmarshal([]byte(old), &oo); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(new), &no); err != nil {
+		return false
+	}
+
+	return reflect.DeepEqual(oo, no)
+}
